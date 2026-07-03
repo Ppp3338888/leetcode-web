@@ -69,7 +69,7 @@ def lc_post(session, csrf, query, variables=None):
         headers=lc_headers(session, csrf),
         timeout=10,
     )
-    print(f"[LC DEBUG] status={r.status_code} body={r.text[:500]}")
+    print(f"[LC DEBUG] status={r.status_code} body={r.text}")
     r.raise_for_status()
     return r.json()
 
