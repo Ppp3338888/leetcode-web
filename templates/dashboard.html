@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — LeetBot{% endblock %}
+{% block content %}
+<div class="flex justify-between items-center mb-8">
+  <div>
+    <h1 class="text-2xl font-bold">Dashboard</h1>
+    <p class="text-gray-500 text-sm">{{ user.email }}</p>
+  </div>
+  <div class="flex items-center gap-3">
+    {% if not user.lc_session or not user.gmail_token %}
+    <a href="/setup" class="btn-ghost text-sm">Complete Setup</a>
+    {% else %}
+    <span id="bot-status" class="{% if user.bot_enabled %}badge-on{% else %}badge-off{% endif %}">
+      {{ "🟢 Bot ON" if user.bot_enabled else "🔴 Bot OFF" }}
+    </span>
+    <button id="toggle-btn" onclick="toggleBot()" class="btn-primary text-sm">
+      {{ "Turn Off" if user.bot_enabled else "Turn On" }}
+    </button>
+    {% endif %}
+  </div>
+</div>
+
+{% if not user.lc_session or not user.gmail_token %}
+<div class="card p-6 mb-6 border-orange-500/30">
+  <p class="text-orange-400 font-medium mb-1">⚠️ Setup not complete</p>
+  <p class="text-gray-400 text-sm">You need to add your LeetCode cookies and connect Gmail before the bot can run.</p>
+  <a href="/setup" class="btn-primary inline-block mt-4 text-sm">Complete Setup →</a>
+</div>
+{% endif %}
+
+<div class="card p-6">
+  <h2 class="font-semibold mb-4 text-gray-300">Activity Log</h2>
+  {% if logs %}
+  <div class="space-y-3 max-h-96 overflow-y-auto pr-1">
+    {% for log in logs %}
+    <div class="log-item">
+      <p class="text-sm text-gray-200">{{ log.message }}</p>
+      <p class="text-xs text-gray-500 mt-1">{{ log.timestamp.strftime("%b %d, %I:%M %p") }}</p>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="text-gray-500 text-sm">No activity yet. Turn the bot on to get started.</p>
+  {% endif %}
+</div>
+
+<script>
+async function toggleBot() {
+  const btn = document.getElementById("toggle-btn");
+  const status = document.getElementById("bot-status");
+  btn.disabled = true;
+  btn.textContent = "...";
+
+  const res  = await fetch("/bot/toggle", { method: "POST" });
+  const data = await res.json();
+
+  if (data.error) {
+    alert(data.error);
+    btn.disabled = false;
+    btn.textContent = btn.textContent === "..." ? "Turn On" : "Turn Off";
+    return;
+  }
+
+  if (data.enabled) {
+    status.className = "badge-on";
+    status.textContent = "🟢 Bot ON";
+    btn.textContent = "Turn Off";
+  } else {
+    status.className = "badge-off";
+    status.textContent = "🔴 Bot OFF";
+    btn.textContent = "Turn On";
+  }
+  btn.disabled = false;
+  setTimeout(() => location.reload(), 1000);
+}
+</script>
+{% endblock %}

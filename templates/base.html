@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}LeetCode Bot{% endblock %}</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { background: #0f1117; color: #e2e8f0; font-family: 'Inter', sans-serif; }
+  .card { background: #1a1d27; border: 1px solid #2d3148; border-radius: 12px; }
+  .btn-primary { background: #f97316; color: white; padding: 10px 20px; border-radius: 8px; font-weight: 600; transition: opacity 0.2s; }
+  .btn-primary:hover { opacity: 0.85; }
+  .btn-ghost { background: #2d3148; color: #e2e8f0; padding: 10px 20px; border-radius: 8px; font-weight: 500; transition: opacity 0.2s; }
+  .btn-ghost:hover { opacity: 0.75; }
+  .input { background: #0f1117; border: 1px solid #2d3148; border-radius: 8px; padding: 10px 14px; color: #e2e8f0; width: 100%; outline: none; }
+  .input:focus { border-color: #f97316; }
+  .badge-on  { background: #14532d; color: #4ade80; padding: 3px 10px; border-radius: 20px; font-size: 12px; }
+  .badge-off { background: #2d1a1a; color: #f87171; padding: 3px 10px; border-radius: 20px; font-size: 12px; }
+  .log-item  { border-left: 2px solid #f97316; padding-left: 12px; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+{% if session.user_id %}
+<nav class="border-b border-gray-800 px-6 py-4 flex justify-between items-center">
+  <span class="font-bold text-orange-400 text-lg">⚡ LeetBot</span>
+  <div class="flex gap-4 items-center">
+    <a href="/dashboard" class="text-gray-400 hover:text-white text-sm">Dashboard</a>
+    <a href="/settings" class="text-gray-400 hover:text-white text-sm">Settings</a>
+    <a href="/logout" class="text-gray-500 hover:text-white text-sm">Logout</a>
+  </div>
+</nav>
+{% endif %}
+<div class="max-w-3xl mx-auto px-4 py-10">
+  {% block content %}{% endblock %}
+</div>
+</body>
+</html>

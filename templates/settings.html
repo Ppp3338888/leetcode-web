@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Settings — LeetBot{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-8">Settings</h1>
+
+<div class="card p-6 mb-4">
+  <h2 class="font-semibold mb-4">Update LeetCode Cookies</h2>
+  {% if success %}
+  <p class="text-green-400 text-sm mb-4 bg-green-900/20 p-3 rounded-lg">{{ success }}</p>
+  {% endif %}
+  <form method="POST" class="flex flex-col gap-4">
+    <div>
+      <label class="text-xs text-gray-400 mb-1 block">LEETCODE_SESSION</label>
+      <input class="input font-mono text-xs" type="text" name="lc_session" value="{{ user.lc_session or '' }}" required>
+    </div>
+    <div>
+      <label class="text-xs text-gray-400 mb-1 block">csrftoken</label>
+      <input class="input font-mono text-xs" type="text" name="lc_csrf" value="{{ user.lc_csrf or '' }}" required>
+    </div>
+    <button class="btn-primary w-fit">Update Cookies</button>
+  </form>
+</div>
+
+<div class="card p-6">
+  <h2 class="font-semibold mb-3">Gmail</h2>
+  {% if user.gmail_token %}
+  <span class="badge-on">✓ Connected</span>
+  <a href="/gmail/auth" class="text-gray-500 text-sm ml-3 hover:text-white underline">Reconnect</a>
+  {% else %}
+  <a href="/gmail/auth" class="btn-primary inline-block">Connect Gmail →</a>
+  {% endif %}
+</div>
+{% endblock %}

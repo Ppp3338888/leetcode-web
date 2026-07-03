@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Setup — LeetBot{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-1">Setup your bot</h1>
+<p class="text-gray-500 text-sm mb-8">Two quick steps and you're done.</p>
+
+<div class="card p-6 mb-4">
+  <div class="flex items-center gap-3 mb-4">
+    <span class="text-orange-400 font-bold text-lg">01</span>
+    <h2 class="font-semibold">LeetCode cookies</h2>
+  </div>
+  <p class="text-gray-400 text-sm mb-4">
+    Open <a href="https://leetcode.com" target="_blank" class="text-orange-400 underline">leetcode.com</a>, log in, press F12 → Network tab → click any <code class="bg-gray-800 px-1 rounded">graphql/</code> request → Request Headers → copy the values below.
+  </p>
+  <form method="POST" class="flex flex-col gap-4">
+    <div>
+      <label class="text-xs text-gray-400 mb-1 block">LEETCODE_SESSION</label>
+      <input class="input font-mono text-xs" type="text" name="lc_session" value="{{ user.lc_session or '' }}" required placeholder="eyJhbGci...">
+    </div>
+    <div>
+      <label class="text-xs text-gray-400 mb-1 block">csrftoken</label>
+      <input class="input font-mono text-xs" type="text" name="lc_csrf" value="{{ user.lc_csrf or '' }}" required placeholder="QMUUkz...">
+    </div>
+    <button class="btn-primary w-fit">Save & Continue</button>
+  </form>
+</div>
+
+<div class="card p-6">
+  <div class="flex items-center gap-3 mb-4">
+    <span class="text-orange-400 font-bold text-lg">02</span>
+    <h2 class="font-semibold">Connect Gmail</h2>
+  </div>
+  <p class="text-gray-400 text-sm mb-4">Your Gmail is used to send contest alerts to yourself. We only request send + read access.</p>
+  {% if user.gmail_token %}
+  <div class="flex items-center gap-3">
+    <span class="badge-on">✓ Gmail connected</span>
+    <a href="/gmail/auth" class="text-gray-500 text-sm hover:text-white underline">Reconnect</a>
+  </div>
+  {% else %}
+  <a href="/gmail/auth" class="btn-primary inline-block">Connect Gmail →</a>
+  {% endif %}
+</div>
+{% endblock %}
