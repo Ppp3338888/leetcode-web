@@ -70,9 +70,8 @@ def lc_post(session, csrf, query, variables=None):
         timeout=10,
     )
     if r.status_code != 200:
-        raise Exception(f"LC {r.status_code} (op={variables}): {r.text[:800]}")
+        raise Exception(f"LC {r.status_code} (op={variables}): {r.text[:3000]}")
     return r.json()
-
 def get_upcoming(session, csrf):
     data = lc_post(session, csrf, UPCOMING_Q)
     now_ts = time.time()
