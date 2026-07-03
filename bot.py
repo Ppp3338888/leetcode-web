@@ -301,7 +301,10 @@ def bot_loop(user_id, email, lc_session, lc_csrf, gmail_token, log_fn, stop_even
         except Exception as e:
             log(f"Error: {e}")
 
-        time.sleep(60)
+        for _ in range(60):
+            if stop_event.is_set():
+                break
+            time.sleep(1)
 
     log("Bot stopped.")
 
@@ -323,3 +326,5 @@ def start_bot_for_user(user_id, email, lc_session, lc_csrf, gmail_token, log_fn)
 def stop_bot_for_user(user_id):
     if user_id in _stop_events:
         _stop_events[user_id].set()
+    if user_id in _threads:
+        _threads[user_id].join(timeout=10)
