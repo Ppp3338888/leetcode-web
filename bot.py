@@ -2,7 +2,7 @@
 Bot logic — runs one thread per user.
 Each user has their own LeetCode cookies + Gmail token.
 """
-
+from browser_actions import browser_register, browser_unregister
 import time, base64, threading, requests
 from datetime import datetime
 from email.mime.text import MIMEText
@@ -86,15 +86,10 @@ def is_registered(session, csrf, slug):
     return data.get("data", {}).get("contestDetailPage", {}).get("isRegistered", False)
 
 def register(session, csrf, slug):
-    data = lc_post(session, csrf, REGISTER_M, {"titleSlug": slug})
-    r = data.get("data", {}).get("contestRegister", {})
-    return r.get("ok", False), r.get("error", "")
+    return browser_register(session, slug)
 
 def unregister(session, csrf, slug):
-    data = lc_post(session, csrf, UNREGISTER_M, {"titleSlug": slug})
-    r = data.get("data", {}).get("contestUnregister", {})
-    return r.get("ok", False), r.get("error", "")
-
+    return browser_unregister(session, slug)
 # ─── GMAIL ────────────────────────────────────────────────────────────────────
 
 def get_gmail(token_json):
