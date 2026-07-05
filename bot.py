@@ -77,7 +77,7 @@ def get_upcoming(session, csrf):
     now_ts = time.time()
     return [
         c for c in data.get("data", {}).get("allContests", [])
-        if now_ts < c["startTime"] < now_ts + 49 * 3600
+        if now_ts < c["startTime"] < now_ts + 14 * 24 * 3600
         and not c.get("isVirtual", False)
     ]
 
