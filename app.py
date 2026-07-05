@@ -65,6 +65,16 @@ def add_log(user_id, message):
         db.session.commit()
 
 # ─── AUTH ─────────────────────────────────────────────────────────────────────
+@app.route("/debug-screenshot")
+def debug_screenshot():
+    if not logged_in():
+        return redirect(url_for("login"))
+    path = "debug_register.png"
+    if os.path.exists(path):
+        from flask import send_file
+        return send_file(path, mimetype="image/png")
+    return "No screenshot found yet.", 404
+
 
 @app.route("/")
 def index():
