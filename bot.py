@@ -1,4 +1,4 @@
-cat > bot.py << 'PYEOF'
+
 """
 Bot logic — runs one thread per user.
 Each user has their own LeetCode cookies + Gmail token.
@@ -330,4 +330,3 @@ def stop_bot_for_user(user_id):
         _stop_events[user_id].set()
     if user_id in _threads:
         _threads[user_id].join(timeout=10)
-PYEOF
