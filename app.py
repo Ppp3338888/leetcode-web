@@ -65,7 +65,15 @@ def add_log(user_id, message):
         db.session.commit()
 
 # ─── AUTH ─────────────────────────────────────────────────────────────────────
-
+@app.route("/debug-screenshot")
+def debug_screenshot():
+    if not logged_in():
+        return redirect(url_for("login"))
+    path = "debug_register.png"
+    if os.path.exists(path):
+        from flask import send_file
+        return send_file(path, mimetype="image/png")
+    return "No screenshot found yet.", 404
 @app.route("/")
 def index():
     return redirect(url_for("dashboard") if logged_in() else url_for("login"))
@@ -83,6 +91,7 @@ def signup():
         session["user_id"] = user.id
         return redirect(url_for("setup"))
     return render_template("signup.html")
+
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
