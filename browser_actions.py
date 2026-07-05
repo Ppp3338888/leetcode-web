@@ -1,4 +1,3 @@
-
 """
 Browser automation for LeetCode actions Cloudflare blocks via raw HTTP:
 register / unregister from contests.
@@ -30,10 +29,10 @@ def _run_action(session_token, slug, action):
             try:
                 page.goto(
                     f"https://leetcode.com/contest/{slug}/",
-                    wait_until="domcontentloaded",
+                    wait_until="load",
                     timeout=30000,
                 )
-                page.wait_for_timeout(4000)
+                page.wait_for_timeout(6000)
 
                 for consent_text in ["Accept", "Accept All", "Got it", "I Agree"]:
                     consent_btn = page.get_by_role("button", name=consent_text)
@@ -52,9 +51,6 @@ def _run_action(session_token, slug, action):
                             page.get_by_role("button", name="Register").first.click(timeout=15000)
                             page.wait_for_timeout(1500)
 
-                            # Confirmation modal appears with its own "Register" button.
-                            # Some matches may be visually-hidden accessibility duplicates,
-                            # so force the click and rely on the API check afterward to verify.
                             dialog = page.get_by_role("dialog")
                             if dialog.count() > 0:
                                 dialog.get_by_role("button", name="Register").click(timeout=10000, force=True)
