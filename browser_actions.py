@@ -34,12 +34,23 @@ def _run_action(session_token, slug, action):
                 )
                 page.wait_for_timeout(3000)
 
+                # Dismiss a cookie-consent banner if one appears
+                for consent_text in ["Accept", "Accept All", "Got it", "I Agree"]:
+                    consent_btn = page.get_by_role("button", name=consent_text)
+                    if consent_btn.count() > 0:
+                        try:
+                            consent_btn.first.click(timeout=3000)
+                            page.wait_for_timeout(1000)
+                        except Exception:
+                            pass
+
                 if action == "register":
-                    page.get_by_role("button", name="Register").first.click(timeout=10000)
+                    page.wait_for_selector('button:has-text("Register")', timeout=15000)
+                    page.get_by_role("button", name="Register").first.click(timeout=15000)
                     page.wait_for_timeout(2000)
                 else:
-                    # The button shows "Registered" until hovered, which reveals "Leave the Contest?"
                     registered_btn = page.get_by_role("button", name="Registered").first
+                    registered_btn.wait_for(state="visible", timeout=15000)
                     registered_btn.hover(timeout=10000)
                     page.wait_for_timeout(500)
                     page.get_by_role("button", name="Leave the Contest?").click(timeout=10000)
@@ -54,6 +65,11 @@ def _run_action(session_token, slug, action):
             finally:
                 browser.close()
 
+def browser_register(session_token, slug):
+    return _run_action(session_token, slug, "register")
+
+def browser_unregister(session_token, slug):
+    return _run_action(session_token, slug, "unregister")
 def browser_register(session_token, slug):
     return _run_action(session_token, slug, "register")
 
