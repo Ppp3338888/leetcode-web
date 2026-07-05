@@ -1,3 +1,4 @@
+cat > bot.py << 'PYEOF'
 """
 Bot logic — runs one thread per user.
 Each user has their own LeetCode cookies + Gmail token.
@@ -23,16 +24,6 @@ query {
   }
 }"""
 
-REGISTER_M = """
-mutation contestRegister($titleSlug: String!) {
-  contestRegister(contestSlug: $titleSlug) { ok }
-}"""
-
-UNREGISTER_M = """
-mutation contestUnregister($titleSlug: String!) {
-  contestUnregister(contestSlug: $titleSlug) { ok }
-}"""
-
 CHECK_REG_Q = """
 query contestDetailPage($contestSlug: String!) {
   contestDetailPage(contestSlug: $contestSlug) { isRegistered }
@@ -43,10 +34,10 @@ _threads = {}
 _stop_events = {}
 
 # per-user state
-_state = {}  # user_id → {slug: "IN"/"DROP"/"SAFE"/None}
-_registered = {}   # user_id → set of slugs
-_12h_sent = {}     # user_id → set of slugs
-_5min_sent = {}    # user_id → set of slugs
+_state = {}
+_registered = {}
+_12h_sent = {}
+_5min_sent = {}
 
 # ─── LEETCODE ─────────────────────────────────────────────────────────────────
 
@@ -72,12 +63,13 @@ def lc_post(session, csrf, query, variables=None):
     if r.status_code != 200:
         raise Exception(f"LC {r.status_code} (op={variables}): {r.text[:3000]}")
     return r.json()
+
 def get_upcoming(session, csrf):
     data = lc_post(session, csrf, UPCOMING_Q)
     now_ts = time.time()
     return [
         c for c in data.get("data", {}).get("allContests", [])
-        if now_ts < c["startTime"] < now_ts + 14 * 24 * 3600
+        if now_ts < c["startTime"] < now_ts + 14*24* 3600
         and not c.get("isVirtual", False)
     ]
 
@@ -86,10 +78,29 @@ def is_registered(session, csrf, slug):
     return data.get("data", {}).get("contestDetailPage", {}).get("isRegistered", False)
 
 def register(session, csrf, slug):
-    return browser_register(session, slug)
+    ok, err = browser_register(session, slug)
+    if not ok:
+        return ok, err
+    time.sleep(2)
+    try:
+        if is_registered(session, csrf, slug):
+            return True, ""
+        return False, "Click completed but registration not confirmed by LeetCode API"
+    except Exception as e:
+        return False, f"Verification check failed: {e}"
 
 def unregister(session, csrf, slug):
-    return browser_unregister(session, slug)
+    ok, err = browser_unregister(session, slug)
+    if not ok:
+        return ok, err
+    time.sleep(2)
+    try:
+        if not is_registered(session, csrf, slug):
+            return True, ""
+        return False, "Click completed but still shows registered per LeetCode API"
+    except Exception as e:
+        return False, f"Verification check failed: {e}"
+
 # ─── GMAIL ────────────────────────────────────────────────────────────────────
 
 def get_gmail(token_json):
@@ -142,27 +153,26 @@ def bot_loop(user_id, email, lc_session, lc_csrf, gmail_token, log_fn, stop_even
         print(f"[User {user_id}] {msg}")
         log_fn(user_id, msg)
 
-    _state[user_id]     = {}
-    _registered[user_id]  = set()
-    _12h_sent[user_id]  = set()
+    _state[user_id] = {}
+    _registered[user_id] = set()
+    _12h_sent[user_id] = set()
     _5min_sent[user_id] = set()
 
     log("Bot started ✅")
 
     while not stop_event.is_set():
         try:
-            gmail    = get_gmail(gmail_token)
+            gmail = get_gmail(gmail_token)
             contests = get_upcoming(lc_session, lc_csrf)
-            now_ts   = time.time()
+            now_ts = time.time()
 
             for c in contests:
-                slug  = c["titleSlug"]
+                slug = c["titleSlug"]
                 title = c["title"]
                 start = c["startTime"]
                 hours = (start - now_ts) / 3600
-                mins  = (start - now_ts) / 60
+                mins = (start - now_ts) / 60
 
-                # T-48h: auto register
                 if slug not in _registered[user_id]:
                     already = is_registered(lc_session, lc_csrf, slug)
                     if already:
@@ -181,7 +191,6 @@ def bot_loop(user_id, email, lc_session, lc_csrf, gmail_token, log_fn, stop_even
                         else:
                             log(f"❌ Register failed for {title}: {err}")
 
-                # T-12h: choice email
                 if 11.83 <= hours <= 12.17 and slug not in _12h_sent[user_id]:
                     if is_registered(lc_session, lc_csrf, slug):
                         _12h_sent[user_id].add(slug)
@@ -196,7 +205,6 @@ def bot_loop(user_id, email, lc_session, lc_csrf, gmail_token, log_fn, stop_even
                             f"  SAFE  → Keep me in but check again at 5 min\n\n"
                             f"No reply = SAFE (5-min trigger stays on)."
                         )
-                        # Poll for reply in background
                         def poll_12h(slug=slug, title=title, sent_at=sent_at, start=start):
                             deadline = start - 3600
                             while time.time() < deadline and not stop_event.is_set():
@@ -237,14 +245,13 @@ def bot_loop(user_id, email, lc_session, lc_csrf, gmail_token, log_fn, stop_even
                         t = threading.Thread(target=poll_12h, daemon=True)
                         t.start()
 
-                # T-5min: final trigger
                 if 4.83 <= mins <= 5.17 and slug not in _5min_sent[user_id]:
                     state = _state[user_id].get(slug, "SAFE")
                     if state not in ("IN", "DROP") and is_registered(lc_session, lc_csrf, slug):
                         _5min_sent[user_id].add(slug)
                         log(f"⏰ 5-min trigger for {title}")
                         start_str = datetime.fromtimestamp(start).strftime("%I:%M %p")
-                        sent_at   = time.time()
+                        sent_at = time.time()
                         send_email(gmail, email,
                             f"[LeetCode] ⏰ {title} in 5 min — last chance",
                             f"'{title}' starts at {start_str}.\n\n"
@@ -323,3 +330,4 @@ def stop_bot_for_user(user_id):
         _stop_events[user_id].set()
     if user_id in _threads:
         _threads[user_id].join(timeout=10)
+PYEOF
